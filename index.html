@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Калькулятор расчёта заработной платы</title>
+  <style>
+    :root {
+      --red: #b91c1c;
+      --red-bg: #fef2f2;
+      --border: #b0bec9;
+      --border-light: #d8e0e8;
+      --text: #111827;
+      --muted: #4b5563;
+      --bg: #dde4ec;
+      --white: #ffffff;
+      --blue-bg: #edf2f7;
+      --cell-bg: #f9fafb;
+      --field-bg: #ffffff;
+      --field-h: 50px;
+      --radius: 6px;
+      --shadow: 0 4px 20px rgba(15, 23, 42, 0.09);
+      --fs-body: 1.0625rem;
+      --fs-input: 1.125rem;
+      --fs-label: 1.0625rem;
+      --fs-hint: 0.9375rem;
+      --fs-small: 0.875rem;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: var(--fs-body);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+    }
+
+    .title-block {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .title-block h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 700;
+      color: var(--red);
+      letter-spacing: -0.02em;
+    }
+
+    .title-block p {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .calc-sheet {
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow-x: auto;
+      max-width: 100%;
+    }
+
+    .calc-table {
+      width: 100%;
+      max-width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .calc-table col.col-name { width: 64%; }
+    .calc-table col.col-pct { width: 14%; }
+    .calc-table col.col-sum { width: 22%; }
+
+    @media (min-width: 1100px) {
+      .calc-table col.col-name { width: 58%; }
+      .calc-table col.col-pct { width: 14%; }
+      .calc-table col.col-sum { width: 28%; }
+    }
+
+    .calc-table thead th {
+      padding: 14px 18px;
+      background: var(--blue-bg);
+      border-bottom: 2px solid var(--border);
+      font-size: var(--fs-small);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      text-align: left;
+    }
+
+    .calc-table thead th:nth-child(2),
+    .calc-table thead th:nth-child(3) { text-align: center; }
+
+    .calc-table tbody td,
+    .calc-table tfoot td {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+      font-size: var(--fs-label);
+      overflow: hidden;
+      word-wrap: break-word;
+    }
+
+    .cell-name {
+      font-weight: 600;
+      line-height: 1.55;
+      padding-right: 12px;
+    }
+
+    .cell-name .hint {
+      display: block;
+      margin-top: 6px;
+      font-size: var(--fs-hint);
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .cell-pct,
+    .cell-sum {
+      text-align: center;
+      background: var(--cell-bg);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .cell-value {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .field-pct,
+    .field-salary,
+    .pct-display,
+    .sum-display {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      height: var(--field-h);
+      margin: 0;
+      background: var(--field-bg);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .field-pct {
+      justify-content: stretch;
+    }
+
+    tr.section-head td {
+      background: var(--blue-bg);
+      font-weight: 700;
+      font-size: 1.0625rem;
+      color: #1f2937;
+      padding: 14px 20px;
+    }
+
+    tr.sub-row .cell-name {
+      padding-left: 36px;
+      font-weight: 500;
+      font-size: var(--fs-label);
+      color: #334155;
+    }
+
+    tr.sub-row .cell-name::before {
+      content: "—";
+      margin-right: 8px;
+      color: var(--muted);
+    }
+
+    .field-pct input {
+      flex: 1;
+      min-width: 0;
+      padding: 0 6px;
+      border: none;
+      font-family: inherit;
+      font-size: var(--fs-input);
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+      background: var(--field-bg);
+      height: 100%;
+      -moz-appearance: textfield;
+    }
+
+    .field-pct input::-webkit-outer-spin-button,
+    .field-pct input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .field-pct input:focus { outline: none; }
+
+    .field-pct:focus-within,
+    .field-salary:focus-within {
+      border-color: #9aa8b8;
+      box-shadow: 0 0 0 2px rgba(154, 168, 184, 0.25);
+    }
+
+    .field-pct .sign {
+      flex-shrink: 0;
+      width: 32px;
+      padding: 0;
+      font-weight: 700;
+      color: var(--muted);
+      font-size: 1.0625rem;
+      background: var(--field-bg);
+      align-self: stretch;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-left: 1px solid var(--border-light);
+    }
+
+    .field-salary {
+      justify-content: stretch;
+    }
+
+    .row-salary .cell-sum--wide {
+      text-align: left;
+      width: 36%;
+    }
+
+    .field-salary input {
+      width: 100%;
+      height: 100%;
+      padding: 0 14px;
+      border: none;
+      font-family: inherit;
+      font-size: var(--fs-input);
+      font-weight: 700;
+      color: var(--text);
+      text-align: right;
+      background: var(--field-bg);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .pct-display {
+      justify-content: center;
+      font-weight: 700;
+      color: var(--text);
+      font-size: var(--fs-input);
+    }
+
+    .sum-display {
+      justify-content: flex-end;
+      padding: 0 14px;
+      font-weight: 700;
+      color: var(--text);
+      font-size: var(--fs-input);
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      white-space: normal;
+      overflow: visible;
+      word-break: break-word;
+    }
+
+    .total-value {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 0 14px;
+      font-weight: 800;
+      color: var(--red);
+      font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      width: 100%;
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      overflow: visible;
+    }
+
+    .categories {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .categories label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 15px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--white);
+      box-shadow: inset 0 0 0 0 transparent;
+      transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+      user-select: none;
+      box-sizing: border-box;
+    }
+
+    .categories label:hover {
+      background: var(--blue-bg);
+      box-shadow: inset 0 0 0 1px var(--border);
+    }
+
+    .categories label:has(input:checked) {
+      background: var(--red-bg);
+      color: var(--red);
+      box-shadow: inset 0 0 0 1px var(--red);
+    }
+
+    .categories input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--red);
+      margin: 0;
+    }
+
+    tr.total-row {
+      background: var(--red-bg);
+    }
+
+    tfoot tr.total-row:first-child {
+      border-top: 2px solid var(--red);
+    }
+
+    tfoot tr.total-row + tr.total-row {
+      border-top: 1px solid #f5c6c6;
+    }
+
+    tr.total-row td {
+      background: var(--red-bg);
+      border-bottom: none;
+      padding: 18px;
+      border-top: none;
+    }
+
+    tr.total-row .cell-name {
+      font-weight: 800;
+      color: var(--red);
+      font-size: 1.125rem;
+      line-height: 1.45;
+    }
+
+    tr.total-row .cell-sum {
+      background: var(--red-bg);
+      text-align: right;
+    }
+
+    .tax-row td {
+      padding: 16px 20px;
+      background: var(--blue-bg);
+      border-top: 1px solid var(--border-light);
+      border-bottom: 1px solid var(--border-light);
+      text-align: center;
+    }
+
+    .tax-row label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      cursor: pointer;
+      font-size: 1.0625rem;
+      font-weight: 600;
+      user-select: none;
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      transition: background 0.15s;
+    }
+
+    .tax-row label:hover { background: rgba(255,255,255,0.7); }
+
+    .tax-row input {
+      width: 22px;
+      height: 22px;
+      accent-color: var(--red);
+      margin: 0;
+    }
+
+    .note {
+      margin-top: 20px;
+      padding: 16px 20px;
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      border-radius: var(--radius);
+      font-size: var(--fs-hint);
+      font-weight: 500;
+      color: #78350f;
+      line-height: 1.65;
+    }
+
+    .note strong { color: #92400e; font-weight: 700; }
+
+    .mobile-label {
+      display: none;
+      font-size: var(--fs-small);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .cell-sum-mobile { display: none; }
+
+    .values-row--desktop {
+      display: contents;
+    }
+
+    .cell-pct--empty { background: var(--cell-bg); }
+
+    @media (min-width: 769px) {
+      .row-salary .mobile-label { display: none; }
+
+      .cell-sum-mobile { display: none !important; }
+      .sum-desktop { display: table-cell !important; }
+
+      .cell-pct > div,
+      .cell-sum > .sum-display,
+      .cell-sum > .field-salary,
+      .cell-sum > .total-value {
+        width: 100%;
+      }
+
+      .values-row--desktop > div:first-child {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .wrapper { padding: 16px 12px 32px; }
+
+      .calc-table thead { display: none; }
+
+      .cell-pct,
+      .cell-sum {
+        text-align: left;
+        background: transparent !important;
+      }
+
+      .calc-table,
+      .calc-table tbody,
+      .calc-table tfoot,
+      .calc-table tr,
+      .calc-table td {
+        display: block;
+        width: 100%;
+      }
+
+      .calc-table tbody tr,
+      .calc-table tfoot tr {
+        border-bottom: 1px solid var(--border-light);
+        padding: 16px;
+      }
+
+      .calc-table tbody tr.section-head {
+        padding: 12px 16px;
+        background: var(--blue-bg);
+      }
+
+      .calc-table tbody tr.section-head td {
+        padding: 0;
+        border: none;
+      }
+
+      .calc-table tbody td,
+      .calc-table tfoot td {
+        padding: 0;
+        border: none;
+        background: transparent !important;
+      }
+
+      .cell-name { margin-bottom: 12px; }
+
+      tr.sub-row .cell-name { padding-left: 0; }
+      tr.sub-row .cell-name::before { content: none; }
+
+      .mobile-label { display: block; }
+      .cell-sum-mobile { display: block; }
+      .sum-desktop { display: none !important; }
+
+      .values-row--desktop {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        align-items: end;
+      }
+
+      .values-row--desktop > div {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+
+      .row-data .cell-pct {
+        margin-top: 4px;
+      }
+
+      .row-data .cell-sum.sum-desktop {
+        display: none !important;
+      }
+
+      .row-salary .cell-name { margin-bottom: 12px; }
+
+      .row-salary .cell-sum--wide {
+        width: 100%;
+      }
+
+      .calc-table tbody tr.tax-row {
+        padding: 0;
+        border-bottom: none;
+      }
+
+      .calc-table tbody tr.tax-row td {
+        padding: 16px;
+        border: none;
+        background: var(--blue-bg) !important;
+      }
+
+      tr.total-row {
+        padding: 16px;
+        background: var(--red-bg);
+      }
+
+      tfoot tr.total-row:first-child {
+        border-top: 2px solid var(--red);
+      }
+
+      tr.total-row td {
+        padding: 0;
+        border: none !important;
+        background: transparent !important;
+      }
+
+      tr.total-row .cell-name {
+        margin-bottom: 8px;
+      }
+
+      tr.total-row .cell-pct { display: none !important; }
+
+      tr.total-row .cell-sum {
+        text-align: left;
+        padding: 0;
+      }
+
+      tr.total-row .total-value {
+        font-size: clamp(1.35rem, 6vw, 1.75rem);
+      }
+
+      .categories label {
+        flex: 1 1 calc(50% - 6px);
+        justify-content: center;
+        padding: 12px 10px;
+        font-size: 0.9375rem;
+      }
+
+      .sum-display {
+        width: 100%;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+        word-break: break-word;
+        font-size: var(--fs-input);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="title-block">
+      <h1>Калькулятор расчёта заработной платы</h1>
+      <p>Заполните, пожалуйста, поля:</p>
+    </div>
+
+    <div class="calc-sheet">
+      <table class="calc-table">
+        <colgroup>
+          <col class="col-name">
+          <col class="col-pct">
+          <col class="col-sum">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Наименование</th>
+            <th>%</th>
+            <th>Сумма, руб.</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="row-salary">
+            <td class="cell-name">
+              Должностной оклад в соответствии с действующими положениями об оплате и стимулировании труда работников учреждений здравоохранения
+              <span class="hint">(руб.)</span>
+            </td>
+            <td class="cell-sum cell-sum--wide" colspan="2">
+              <div class="mobile-label">Сумма, руб.</div>
+              <div class="field-salary">
+                <input type="text" id="baseSalary" inputmode="decimal" autocomplete="off" placeholder="0,00">
+              </div>
+            </td>
+          </tr>
+
+          <tr class="row-data">
+            <td class="cell-name">
+              Квалификационная категория:
+              <div class="categories" id="categoryGroup">
+                <label><input type="radio" name="category" value="10"> 10% (вторая)</label>
+                <label><input type="radio" name="category" value="20"> 20% (первая)</label>
+                <label><input type="radio" name="category" value="30"> 30% (высшая)</label>
+                <label><input type="radio" name="category" value="0" checked> Нет категории</label>
+              </div>
+            </td>
+            <td class="cell-pct">
+              <div class="values-row--desktop">
+                <div>
+                  <div class="mobile-label">%</div>
+                  <span class="pct-display" id="categoryPct">0%</span>
+                </div>
+                <div class="cell-sum-mobile">
+                  <div class="mobile-label">Сумма, руб.</div>
+                  <span class="sum-display" id="categoryAmt">0,00</span>
+                </div>
+              </div>
+            </td>
+            <td class="cell-sum sum-desktop">
+              <span class="sum-display" id="categoryAmtDesktop">0,00</span>
+            </td>
+          </tr>
+
+          <tr class="row-data">
+            <td class="cell-name">
+              Выплаты работникам, занятым на тяжёлых работах, работах с вредными и (или) опасными и иными особыми условиями труда, установленные действующими положениями об оплате и стимулировании труда
+              <span class="hint">(от 4 до 12%)</span>
+            </td>
+            <td class="cell-pct">
+              <div class="values-row--desktop">
+                <div>
+                  <div class="mobile-label">%</div>
+                  <div class="field-pct">
+                    <input type="number" id="harmfulPct" min="0" max="12" step="0.1" value="0">
+                    <span class="sign">%</span>
+                  </div>
+                </div>
+                <div class="cell-sum-mobile">
+                  <div class="mobile-label">Сумма, руб.</div>
+                  <span class="sum-display harmful-sum">0,00</span>
+                </div>
+              </div>
+            </td>
+            <td class="cell-sum sum-desktop">
+              <span class="sum-display" id="harmfulAmt">0,00</span>
+            </td>
+          </tr>
+
+          <tr class="section-head">
+            <td colspan="3">Стимулирующая выплата (в размерах, установленных локальными нормативными актами, трудовыми контрактами):</td>
+          </tr>
+
+          <tr class="row-data sub-row">
+            <td class="cell-name">за интенсивность:</td>
+            <td class="cell-pct">
+              <div class="values-row--desktop">
+                <div>
+                  <div class="mobile-label">%</div>
+                  <div class="field-pct">
+                    <input type="number" id="intensityPct" min="0" max="100" step="0.1" value="0">
+                    <span class="sign">%</span>
+                  </div>
+                </div>
+                <div class="cell-sum-mobile">
+                  <div class="mobile-label">Сумма, руб.</div>
+                  <span class="sum-display intensity-sum">0,00</span>
+                </div>
+              </div>
+            </td>
+            <td class="cell-sum sum-desktop">
+              <span class="sum-display" id="intensityAmt">0,00</span>
+            </td>
+          </tr>
+
+          <tr class="row-data sub-row">
+            <td class="cell-name">за качество:</td>
+            <td class="cell-pct">
+              <div class="values-row--desktop">
+                <div>
+                  <div class="mobile-label">%</div>
+                  <div class="field-pct">
+                    <input type="number" id="qualityPct" min="0" max="100" step="0.1" value="0">
+                    <span class="sign">%</span>
+                  </div>
+                </div>
+                <div class="cell-sum-mobile">
+                  <div class="mobile-label">Сумма, руб.</div>
+                  <span class="sum-display quality-sum">0,00</span>
+                </div>
+              </div>
+            </td>
+            <td class="cell-sum sum-desktop">
+              <span class="sum-display" id="qualityAmt">0,00</span>
+            </td>
+          </tr>
+
+          <tr class="row-data">
+            <td class="cell-name">Премиальные выплаты по итогам месяца:</td>
+            <td class="cell-pct">
+              <div class="values-row--desktop">
+                <div>
+                  <div class="mobile-label">%</div>
+                  <div class="field-pct">
+                    <input type="number" id="bonusPct" min="0" max="100" step="0.1" value="0">
+                    <span class="sign">%</span>
+                  </div>
+                </div>
+                <div class="cell-sum-mobile">
+                  <div class="mobile-label">Сумма, руб.</div>
+                  <span class="sum-display bonus-sum">0,00</span>
+                </div>
+              </div>
+            </td>
+            <td class="cell-sum sum-desktop">
+              <span class="sum-display" id="bonusAmt">0,00</span>
+            </td>
+          </tr>
+
+          <tr class="row-data">
+            <td class="cell-name">Районный коэффициент 70%:</td>
+            <td class="cell-pct">
+              <div class="values-row--desktop">
+                <div>
+                  <div class="mobile-label">%</div>
+                  <div class="field-pct">
+                    <input type="number" id="regionalPct" min="0" max="200" step="0.1" value="70">
+                    <span class="sign">%</span>
+                  </div>
+                </div>
+                <div class="cell-sum-mobile">
+                  <div class="mobile-label">Сумма, руб.</div>
+                  <span class="sum-display regional-sum">0,00</span>
+                </div>
+              </div>
+            </td>
+            <td class="cell-sum sum-desktop">
+              <span class="sum-display" id="regionalAmt">0,00</span>
+            </td>
+          </tr>
+
+          <tr class="row-data">
+            <td class="cell-name">
+              Процентная надбавка (северные) от 0 до 50%
+              <span class="hint">(установленная в соответствии с законодательством)</span>
+            </td>
+            <td class="cell-pct">
+              <div class="values-row--desktop">
+                <div>
+                  <div class="mobile-label">%</div>
+                  <div class="field-pct">
+                    <input type="number" id="northernPct" min="0" max="50" step="0.1" value="0">
+                    <span class="sign">%</span>
+                  </div>
+                </div>
+                <div class="cell-sum-mobile">
+                  <div class="mobile-label">Сумма, руб.</div>
+                  <span class="sum-display northern-sum">0,00</span>
+                </div>
+              </div>
+            </td>
+            <td class="cell-sum sum-desktop">
+              <span class="sum-display" id="northernAmt">0,00</span>
+            </td>
+          </tr>
+
+          <tr class="tax-row">
+            <td colspan="3">
+              <label>
+                <input type="checkbox" id="taxCheckbox">
+                Учесть подоходный налог в размере 13%
+              </label>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td class="cell-name">Итого начисленная заработная плата за месяц (руб.)</td>
+            <td class="cell-sum" colspan="2">
+              <span class="total-value" id="grossTotal">0,00</span>
+            </td>
+          </tr>
+          <tr class="total-row">
+            <td class="cell-name">Итого заработная плата за вычетом подоходного налога (руб.)</td>
+            <td class="cell-sum" colspan="2">
+              <span class="total-value" id="netTotal">0,00</span>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="note">
+      <strong>Примечание:</strong> заработная плата рассчитывается на ставку, без учёта совместительства и совмещения, праздничных, ночных, дежурств, за учёную степень и почётные звания.
+    </div>
+  </div>
+
+  <script>
+    const moneyFmt = new Intl.NumberFormat('ru-RU', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+    const fmt = (n) => moneyFmt.format(n);
+
+    const parseMoney = (str) => {
+      if (!str || !String(str).trim()) return 0;
+      const cleaned = String(str).replace(/\s/g, '').replace(',', '.');
+      const n = parseFloat(cleaned);
+      return Number.isFinite(n) ? Math.max(0, n) : 0;
+    };
+
+    const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
+
+    const els = {
+      baseSalary: document.getElementById('baseSalary'),
+      categoryGroup: document.getElementById('categoryGroup'),
+      harmfulPct: document.getElementById('harmfulPct'),
+      intensityPct: document.getElementById('intensityPct'),
+      qualityPct: document.getElementById('qualityPct'),
+      bonusPct: document.getElementById('bonusPct'),
+      regionalPct: document.getElementById('regionalPct'),
+      northernPct: document.getElementById('northernPct'),
+      taxCheckbox: document.getElementById('taxCheckbox'),
+      categoryPct: document.getElementById('categoryPct'),
+      categoryAmt: document.getElementById('categoryAmt'),
+      categoryAmtDesktop: document.getElementById('categoryAmtDesktop'),
+      harmfulAmt: document.getElementById('harmfulAmt'),
+      intensityAmt: document.getElementById('intensityAmt'),
+      qualityAmt: document.getElementById('qualityAmt'),
+      bonusAmt: document.getElementById('bonusAmt'),
+      regionalAmt: document.getElementById('regionalAmt'),
+      northernAmt: document.getElementById('northernAmt'),
+      grossTotal: document.getElementById('grossTotal'),
+      netTotal: document.getElementById('netTotal'),
+    };
+
+    function updateAllSums(map) {
+      const pairs = [
+        ['harmfulAmt', '.harmful-sum'],
+        ['intensityAmt', '.intensity-sum'],
+        ['qualityAmt', '.quality-sum'],
+        ['bonusAmt', '.bonus-sum'],
+        ['regionalAmt', '.regional-sum'],
+        ['northernAmt', '.northern-sum'],
+      ];
+
+      pairs.forEach(([id, mobileClass]) => {
+        const text = fmt(map[id]);
+        document.getElementById(id).textContent = text;
+        document.querySelector(mobileClass).textContent = text;
+      });
+
+      const catText = fmt(map.categoryAmt);
+      els.categoryAmt.textContent = catText;
+      els.categoryAmtDesktop.textContent = catText;
+    }
+
+    function getCategoryPct() {
+      const checked = els.categoryGroup.querySelector('input:checked');
+      return checked ? parseFloat(checked.value) : 0;
+    }
+
+    function calc() {
+      const base = parseMoney(els.baseSalary.value);
+      const harmful = clamp(parseFloat(els.harmfulPct.value) || 0, 0, 12);
+      const intensity = clamp(parseFloat(els.intensityPct.value) || 0, 0, 100);
+      const quality = clamp(parseFloat(els.qualityPct.value) || 0, 0, 100);
+      const bonus = clamp(parseFloat(els.bonusPct.value) || 0, 0, 100);
+      const regional = clamp(parseFloat(els.regionalPct.value) || 0, 0, 200);
+      const northern = clamp(parseFloat(els.northernPct.value) || 0, 0, 50);
+      const category = getCategoryPct();
+
+      els.regionalPct.value = regional;
+
+      const categoryPay = base * category / 100;
+      const harmfulPay = base * harmful / 100;
+      const intensityPay = base * intensity / 100;
+      const qualityPay = base * quality / 100;
+      const bonusPay = base * bonus / 100;
+      const subtotal = base + categoryPay + harmfulPay + intensityPay + qualityPay + bonusPay;
+      const regionalPay = subtotal * regional / 100;
+      const northernPay = subtotal * northern / 100;
+      const gross = subtotal + regionalPay + northernPay;
+      const net = els.taxCheckbox.checked ? gross * 0.87 : gross;
+
+      els.categoryPct.textContent = category + '%';
+
+      updateAllSums({
+        categoryAmt: categoryPay,
+        harmfulAmt: harmfulPay,
+        intensityAmt: intensityPay,
+        qualityAmt: qualityPay,
+        bonusAmt: bonusPay,
+        regionalAmt: regionalPay,
+        northernAmt: northernPay,
+      });
+
+      els.grossTotal.textContent = fmt(gross);
+      els.netTotal.textContent = fmt(net);
+    }
+
+    els.baseSalary.addEventListener('focus', () => {
+      els.baseSalary.select();
+    });
+
+    els.baseSalary.addEventListener('blur', () => {
+      const n = parseMoney(els.baseSalary.value);
+      els.baseSalary.value = n > 0 ? fmt(n) : '';
+      calc();
+    });
+
+    document.querySelectorAll('input').forEach((el) => {
+      el.addEventListener('input', calc);
+      if (el !== els.baseSalary) {
+        el.addEventListener('change', calc);
+      }
+    });
+
+    calc();
+  </script>
+</body>
+</html>
