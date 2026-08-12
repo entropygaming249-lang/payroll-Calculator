@@ -409,6 +409,42 @@
 
     .note strong { color: #92400e; font-weight: 700; }
 
+    .night-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .night-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .night-field .field-label {
+      font-size: var(--fs-hint);
+      font-weight: 500;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .night-field .field-salary {
+      max-width: 220px;
+    }
+
+    .night-field .field-salary input {
+      text-align: center;
+    }
+
+    .tax-row .tax-options {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 8px 24px;
+    }
+
     .mobile-label {
       display: none;
       font-size: var(--fs-small);
@@ -524,12 +560,14 @@
         width: 100%;
       }
 
-      .calc-table tbody tr.tax-row {
+      .calc-table tbody tr.tax-row,
+      .calc-table tfoot tr.tax-row {
         padding: 0;
         border-bottom: none;
       }
 
-      .calc-table tbody tr.tax-row td {
+      .calc-table tbody tr.tax-row td,
+      .calc-table tfoot tr.tax-row td {
         padding: 16px;
         border: none;
         background: var(--blue-bg) !important;
@@ -648,7 +686,6 @@
           <tr class="row-data">
             <td class="cell-name">
               Выплаты работникам, занятым на тяжёлых работах, работах с вредными и (или) опасными и иными особыми условиями труда, установленные действующими положениями об оплате и стимулировании труда
-              <span class="hint">(от 4 до 12%)</span>
             </td>
             <td class="cell-pct">
               <div class="values-row--desktop">
@@ -740,6 +777,55 @@
             </td>
           </tr>
 
+          <tr class="row-salary">
+            <td class="cell-name">
+              Выплаты медицинскому персоналу первичного звена амбулаторно-поликлинической службы, скорой медицинской помощи
+              <span class="hint">(руб.)</span>
+            </td>
+            <td class="cell-sum cell-sum--wide" colspan="2">
+              <div class="mobile-label">Сумма, руб.</div>
+              <div class="field-salary">
+                <input type="text" id="primaryCarePay" inputmode="decimal" autocomplete="off" placeholder="0,00">
+              </div>
+            </td>
+          </tr>
+
+          <tr class="row-data">
+            <td class="cell-name">
+              Доплата за работу в ночное время
+              <span class="hint">(%)</span>
+              <div class="night-fields">
+                <div class="night-field">
+                  <span class="field-label">норма рабочего времени за текущий месяц по производственному календарю (час)</span>
+                  <div class="field-salary">
+                    <input type="number" id="normHours" min="0" max="744" step="1" value="160" inputmode="numeric">
+                  </div>
+                </div>
+                <div class="night-field">
+                  <span class="field-label">количество отработанных ночных часов в месяц (час) (с 22:00 до 06:00)</span>
+                  <div class="field-salary">
+                    <input type="number" id="nightHours" min="0" max="744" step="0.1" value="0" inputmode="decimal">
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td class="cell-pct">
+              <div class="values-row--desktop">
+                <div>
+                  <div class="mobile-label">%</div>
+                  <span class="pct-display" id="nightPct">20%</span>
+                </div>
+                <div class="cell-sum-mobile">
+                  <div class="mobile-label">Сумма, руб.</div>
+                  <span class="sum-display night-sum">0,00</span>
+                </div>
+              </div>
+            </td>
+            <td class="cell-sum sum-desktop">
+              <span class="sum-display" id="nightAmt">0,00</span>
+            </td>
+          </tr>
+
           <tr class="row-data">
             <td class="cell-name">Районный коэффициент 70%:</td>
             <td class="cell-pct">
@@ -787,14 +873,6 @@
             </td>
           </tr>
 
-          <tr class="tax-row">
-            <td colspan="3">
-              <label>
-                <input type="checkbox" id="taxCheckbox">
-                Учесть подоходный налог в размере 13%
-              </label>
-            </td>
-          </tr>
         </tbody>
         <tfoot>
           <tr class="total-row">
@@ -803,8 +881,22 @@
               <span class="total-value" id="grossTotal">0,00</span>
             </td>
           </tr>
+          <tr class="tax-row">
+            <td colspan="3">
+              <div class="tax-options">
+                <label>
+                  <input type="checkbox" id="taxCheckbox">
+                  Учесть подоходный налог в размере 13%
+                </label>
+                <label>
+                  <input type="checkbox" id="unionCheckbox">
+                  Учесть профсоюзный взнос в размере 1%
+                </label>
+              </div>
+            </td>
+          </tr>
           <tr class="total-row">
-            <td class="cell-name">Итого заработная плата за вычетом подоходного налога (руб.)</td>
+            <td class="cell-name">Итого заработная плата за вычетом подоходного налога (профсоюзного взноса) (руб.)</td>
             <td class="cell-sum" colspan="2">
               <span class="total-value" id="netTotal">0,00</span>
             </td>
@@ -814,7 +906,7 @@
     </div>
 
     <div class="note">
-      <strong>Примечание:</strong> заработная плата рассчитывается на ставку, без учёта совместительства и совмещения, праздничных, ночных, дежурств, за учёную степень и почётные звания.
+      <strong>Примечание:</strong> заработная плата рассчитывается на ставку, без учёта совместительства и совмещения, праздничных, за учёную степень и почётные звания.
     </div>
   </div>
 
@@ -825,6 +917,7 @@
     });
 
     const fmt = (n) => moneyFmt.format(n);
+    const NIGHT_RATE = 20;
 
     const parseMoney = (str) => {
       if (!str || !String(str).trim()) return 0;
@@ -842,9 +935,13 @@
       intensityPct: document.getElementById('intensityPct'),
       qualityPct: document.getElementById('qualityPct'),
       bonusPct: document.getElementById('bonusPct'),
+      primaryCarePay: document.getElementById('primaryCarePay'),
+      normHours: document.getElementById('normHours'),
+      nightHours: document.getElementById('nightHours'),
       regionalPct: document.getElementById('regionalPct'),
       northernPct: document.getElementById('northernPct'),
       taxCheckbox: document.getElementById('taxCheckbox'),
+      unionCheckbox: document.getElementById('unionCheckbox'),
       categoryPct: document.getElementById('categoryPct'),
       categoryAmt: document.getElementById('categoryAmt'),
       categoryAmtDesktop: document.getElementById('categoryAmtDesktop'),
@@ -852,11 +949,14 @@
       intensityAmt: document.getElementById('intensityAmt'),
       qualityAmt: document.getElementById('qualityAmt'),
       bonusAmt: document.getElementById('bonusAmt'),
+      nightAmt: document.getElementById('nightAmt'),
       regionalAmt: document.getElementById('regionalAmt'),
       northernAmt: document.getElementById('northernAmt'),
       grossTotal: document.getElementById('grossTotal'),
       netTotal: document.getElementById('netTotal'),
     };
+
+    const moneyInputs = [els.baseSalary, els.primaryCarePay];
 
     function updateAllSums(map) {
       const pairs = [
@@ -864,6 +964,7 @@
         ['intensityAmt', '.intensity-sum'],
         ['qualityAmt', '.quality-sum'],
         ['bonusAmt', '.bonus-sum'],
+        ['nightAmt', '.night-sum'],
         ['regionalAmt', '.regional-sum'],
         ['northernAmt', '.northern-sum'],
       ];
@@ -890,6 +991,9 @@
       const intensity = clamp(parseFloat(els.intensityPct.value) || 0, 0, 100);
       const quality = clamp(parseFloat(els.qualityPct.value) || 0, 0, 100);
       const bonus = clamp(parseFloat(els.bonusPct.value) || 0, 0, 100);
+      const primaryCare = parseMoney(els.primaryCarePay.value);
+      const normHours = clamp(parseFloat(els.normHours.value) || 0, 0, 744);
+      const nightHours = clamp(parseFloat(els.nightHours.value) || 0, 0, 744);
       const regional = clamp(parseFloat(els.regionalPct.value) || 0, 0, 200);
       const northern = clamp(parseFloat(els.northernPct.value) || 0, 0, 50);
       const category = getCategoryPct();
@@ -901,11 +1005,27 @@
       const intensityPay = base * intensity / 100;
       const qualityPay = base * quality / 100;
       const bonusPay = base * bonus / 100;
-      const subtotal = base + categoryPay + harmfulPay + intensityPay + qualityPay + bonusPay;
+      const nightPay = normHours > 0
+        ? (base / normHours) * nightHours * (NIGHT_RATE / 100)
+        : 0;
+
+      const subtotal =
+        base +
+        categoryPay +
+        harmfulPay +
+        intensityPay +
+        qualityPay +
+        bonusPay +
+        primaryCare +
+        nightPay;
+
       const regionalPay = subtotal * regional / 100;
       const northernPay = subtotal * northern / 100;
       const gross = subtotal + regionalPay + northernPay;
-      const net = els.taxCheckbox.checked ? gross * 0.87 : gross;
+
+      let net = gross;
+      if (els.taxCheckbox.checked) net -= gross * 0.13;
+      if (els.unionCheckbox.checked) net -= gross * 0.01;
 
       els.categoryPct.textContent = category + '%';
 
@@ -915,6 +1035,7 @@
         intensityAmt: intensityPay,
         qualityAmt: qualityPay,
         bonusAmt: bonusPay,
+        nightAmt: nightPay,
         regionalAmt: regionalPay,
         northernAmt: northernPay,
       });
@@ -923,19 +1044,21 @@
       els.netTotal.textContent = fmt(net);
     }
 
-    els.baseSalary.addEventListener('focus', () => {
-      els.baseSalary.select();
-    });
+    moneyInputs.forEach((input) => {
+      input.addEventListener('focus', () => {
+        input.select();
+      });
 
-    els.baseSalary.addEventListener('blur', () => {
-      const n = parseMoney(els.baseSalary.value);
-      els.baseSalary.value = n > 0 ? fmt(n) : '';
-      calc();
+      input.addEventListener('blur', () => {
+        const n = parseMoney(input.value);
+        input.value = n > 0 ? fmt(n) : '';
+        calc();
+      });
     });
 
     document.querySelectorAll('input').forEach((el) => {
       el.addEventListener('input', calc);
-      if (el !== els.baseSalary) {
+      if (!moneyInputs.includes(el)) {
         el.addEventListener('change', calc);
       }
     });
